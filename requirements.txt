@@ -1,31 +1,12 @@
-# =============================================================================
-# Scholarship RAG System — Dependencies
-# =============================================================================
-# WHY VERSIONS ARE PINNED EXACTLY (== not >=):
-# Unpinned dependencies ("pydantic" with no version) mean every fresh
-# install could pull a DIFFERENT version depending on WHEN you run
-# `pip install`. We already hit this exact problem in Phase 2 — an
-# import path that worked in one langchain version broke in another.
-# Pinning exact versions means "it works on my machine" reliably
-# becomes "it works on every machine", including your CI pipeline
-# (Phase 8) and anyone else who clones this repo.
-#
-# This file grows as we complete each phase — Phase 1-2 dependencies
-# are listed below; Phase 3+ will add Qdrant, sentence-transformers,
-# FastAPI, etc.
-# =============================================================================
-
-# --- Phase 1: Config & validation ---
 pydantic==2.13.4
 pydantic-settings==2.14.2
 python-dotenv==1.2.2
 
-# --- Phase 2: Document ingestion ---
 pypdf==5.9.0
 langchain==1.3.11
 langchain-core==1.4.8
 langchain-text-splitters==1.1.2
 
-# --- Testing (used from Phase 2 onward) ---
 pytest==9.1.1
 reportlab==4.4.10
+
