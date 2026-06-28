@@ -1,11 +1,8 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-
 from src.exceptions import DocumentLoadError, IngestionError
 from src.ingestion.chunker import Chunk, create_chunks, filter_low_value_chunks
 from src.ingestion.loader import discover_files, load_document
-
-
 @dataclass
 class FileIngestionResult:
     """Result of attempting to ingest ONE file — success or failure, with details."""
@@ -15,7 +12,6 @@ class FileIngestionResult:
     pages_loaded: int = 0
     chunks_produced: int = 0
     error_message: str | None = None
-
 
 @dataclass
 class IngestionReport:
@@ -79,9 +75,7 @@ def _ingest_single_file(file_path: Path) -> tuple[FileIngestionResult, list[Chun
     of run_ingestion_pipeline() directly: extracting the "try one file"
     logic into its own function makes run_ingestion_pipeline() read as
     a clean loop ("for each file, try to ingest it") instead of mixing
-    the looping logic with the try/except details. This also makes
-    THIS function independently unit-testable (see tests/test_ingestion.py
-    in Phase 8) without needing a real folder full of files.
+    the looping logic with the try/except details.
 
     Returns:
         A tuple of (result, chunks). `chunks` is an empty list if the
@@ -131,10 +125,7 @@ def run_ingestion_pipeline(data_directory: Path | None = None) -> IngestionRepor
     Runs the full ingestion pipeline: discover files -> load -> chunk ->
     filter, across an entire directory, with per-file fault isolation.
 
-    This is the SINGLE function that scripts/ingest.py (Phase 8's CLI)
-    and the FastAPI /ingest endpoint (also Phase 8) will both call. They
-    don't need to know anything about loader.py or chunker.py directly —
-    this function is the public interface to "ingest everything in the
+    This function is the public interface to "ingest everything in the
     data folder".
 
     Args:
@@ -154,10 +145,6 @@ def run_ingestion_pipeline(data_directory: Path | None = None) -> IngestionRepor
                          the whole run, rather than a per-file failure,
                          because there is nothing at all to report.
     """
-    # Import here (not at module top) to avoid a circular import: settings
-    # is already imported at the top of config/__init__.py, and importing
-    # it lazily here keeps this function flexible for testing with a
-    # custom directory without needing settings to be pre-configured.
     from src.config import settings
 
     if data_directory is None:
