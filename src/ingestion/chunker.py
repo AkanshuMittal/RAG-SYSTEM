@@ -1,37 +1,15 @@
 import hashlib
 from dataclasses import dataclass, field
-
-# NOTE ON THIS IMPORT — a real lesson, not just theory:
-# Older LangChain tutorials (and your ORIGINAL prototype) import this as
-# `from langchain.text_splitter import RecursiveCharacterTextSplitter`.
-# That path is DEPRECATED in current LangChain versions — text splitters
-# were moved into their own standalone package, `langchain_text_splitters`,
-# so they could be released and versioned independently of the main
-# langchain package. Using the old path either fails outright or emits
-# a deprecation warning depending on the exact version installed.
-# THE LESSON: pin your dependency versions in requirements.txt (we do,
-# see Phase 8) and always import from the package the CURRENT docs
-# recommend, not whatever an older tutorial shows.
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document as LangChainDocument
-
 from src.config import settings
 from src.exceptions import ChunkingError
 from src.ingestion.loader import LoadedDocument
 
-
 @dataclass
 class Chunk:
     """
-    A single chunk of text, ready to be embedded and stored in Qdrant.
-
-    WHY THIS IS A SEPARATE CLASS FROM LoadedDocument (defined in loader.py):
-    A LoadedDocument represents ONE FULL PAGE. A Chunk represents a
-    SMALLER PIECE of that page (since a page might be split into 2-3
-    chunks if it's long, or multiple short pages might NOT be merged
-    because we chunk per-page to keep page-number citations accurate).
-    Keeping these as distinct types makes it impossible to accidentally
-    pass a whole unchunked page where a chunk was expected.
+    A single chunk of text, ready to be embedded and stored in Vector Store.
     """
 
     text: str
@@ -41,18 +19,9 @@ class Chunk:
     # Position of this chunk WITHIN its source page (0-indexed).
     # WHY WE TRACK THIS: if a page produces 3 chunks, this tells us
     # "chunk 0 of page 4" vs "chunk 1 of page 4" — useful for debugging
-    # and for the parent-child retrieval pattern (see retrieval/retriever.py
-    # in Phase 4), where we may want to fetch NEIGHBORING chunks for
-    # more context around a matched chunk.
     chunk_index: int
 
     # A unique, stable ID for this exact chunk's content.
-    # WHY THIS MATTERS FOR IDEMPOTENT INGESTION:
-    # If you run ingestion twice on the same PDF, the SAME text content
-    # will produce the SAME hash both times. ingest_pipeline.py uses this
-    # to check "does Qdrant already have a chunk with this exact ID?" and
-    # skips re-inserting it — this is what makes re-running ingestion safe
-    # instead of creating duplicate vectors every time you run it.
     chunk_id: str = field(default="")
 
     def __post_init__(self):
@@ -152,13 +121,6 @@ def create_chunks(loaded_documents: list[LoadedDocument]) -> list[Chunk]:
     nearby. This is "structure-aware" in a lightweight sense: it
     respects natural language boundaries instead of cutting blindly
     every N characters regardless of where a sentence ends.
-
-    WHY WE READ chunk_size/chunk_overlap FROM settings INSTEAD OF
-    HARDCODING THEM HERE (like the original prototype did):
-    See config/settings.py for the full reasoning on WHY 800/120 were
-    chosen for this domain. The important architectural point is that
-    this VALUE lives in exactly one place, so tuning it for an experiment
-    is a one-line .env change, not a source code edit.
 
     Args:
         loaded_documents: Output from loader.py's load_document() calls.
