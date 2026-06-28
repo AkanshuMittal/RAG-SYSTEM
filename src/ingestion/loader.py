@@ -79,15 +79,6 @@ def load_pdf(file_path: Path) -> list[LoadedDocument]:
     try:
         reader = PdfReader(str(file_path))
     except Exception as error:
-        # WHY WE CATCH `Exception` HERE SPECIFICALLY (an exception to our
-        # usual rule of catching specific exception types): PdfReader can
-        # raise many different low-level error types depending on HOW the
-        # PDF is broken (corrupted header, encryption, truncated file).
-        # We don't need to distinguish between these for OUR purposes —
-        # any of them means "this PDF could not be opened" — so we catch
-        # broadly here and immediately convert it into OUR specific,
-        # well-defined DocumentLoadError instead of leaking pypdf's
-        # internal exception types up through our system.
         raise DocumentLoadError(
             file_path=str(file_path),
             reason=f"could not open or parse PDF ({type(error).__name__}: {error})",
@@ -177,11 +168,6 @@ def load_markdown(file_path: Path) -> list[LoadedDocument]:
         )
     ]
 
-
-# -----------------------------------------------------------------------
-# THE REGISTRY — this is the core of the pluggable-loader design.
-# -----------------------------------------------------------------------
-# Maps a file extension to the function that knows how to load it.
 # TO ADD A NEW FILE TYPE: write a `load_xxx(file_path) -> list[LoadedDocument]`
 # function above, then add ONE line here. Nothing else in this codebase
 # needs to change.
